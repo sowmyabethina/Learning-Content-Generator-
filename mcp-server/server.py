@@ -1,14 +1,13 @@
 from fastmcp import FastMCP
-import PyPDF2
 
-mcp = FastMCP("DataExtractor")
+mcp = FastMCP("PersonalLearner")
 
 @mcp.tool()
-def read_pdf_text(file_path: str) -> str:
-    """Extracts text from a PDF file."""
-    with open(file_path, "rb") as f:
-        reader = PyPDF2.PdfReader(f)
-        return " ".join([page.extract_text() for page in reader.pages])
+def get_knowledge_level(score: int) -> str:
+    """Categorizes user based on quiz score."""
+    if score <= 2: return "Beginner"
+    if score <= 4: return "Intermediate"
+    return "Advanced"
 
 if __name__ == "__main__":
     mcp.run()
