@@ -25,8 +25,12 @@ function App() {
   const [questions, setQuestions] = useState([]);
   const [index, setIndex] = useState(0);
   const [score, setScore] = useState(0);
+  const [correctCount, setCorrectCount] = useState(null);
   const [selected, setSelected] = useState("");
   const [showResult, setShowResult] = useState(false);
+  // Server-side quiz id and user answers for evaluation
+  const [quizId, setQuizId] = useState(null);
+  const [userAnswers, setUserAnswers] = useState([]);
 
   // ==========================================
   // STEP 3: Topic Input for New Quiz States
@@ -205,7 +209,7 @@ function App() {
           userProfile: profile
         };
 
-        const res = await fetch("http://localhost:5000/personalized-quiz", {
+        const res = await fetch("http://localhost:5000/generate-from-pdf", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
@@ -322,7 +326,10 @@ function App() {
       // Option 1: Generate from extracted document content
       if (useExtractedContent && extractedContent) {
         console.log("🚀 Generating quiz from extracted content, length:", extractedContent.length);
-        payload = { docText: extractedContent };
+        payload = {
+          docText: extractedContent.substring(0, 12000)
+        };
+
         res = await fetch("http://localhost:5000/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -347,6 +354,17 @@ function App() {
 
       console.log("📡 Response status:", res.status);
 
+      // Capture server-side quiz id header if provided
+      try {
+        const qid = res.headers.get("X-Quiz-Id");
+        if (qid) {
+          console.log("Captured quiz id:", qid);
+          setQuizId(qid);
+        }
+      } catch (e) {
+        // ignore
+      }
+
       if (!res.ok) {
         const errorData = await res.text();
         console.error("❌ Server error:", errorData);
@@ -368,6 +386,13 @@ function App() {
           options: Array.isArray(q.options) ? q.options : [q.options],
           answer: q.answer || q.options[0]
         }));
+        // If backend set a quiz id in header, capture it for evaluation
+        try {
+          const qid = res.headers.get("X-Quiz-Id");
+          if (qid) setQuizId(qid);
+        } catch (e) {
+          console.warn("Could not read quiz id header", e);
+        }
       } else if (data.questions) {
         // OLD: Handle nested response structure: {questions: {questions: "..."}}
         let questionsText = typeof data.questions === 'object' ? data.questions.questions : data.questions;
@@ -409,6 +434,8 @@ function App() {
         setQuestions(parsedQuestions);
         setIndex(0);
         setScore(0);
+        setUserAnswers([]);
+        setCorrectCount(null);
         setSelected("");
         setShowResult(false);
         setShowTopicInput(false);
@@ -434,21 +461,68 @@ function App() {
   // ==========================
 
   const nextQuestion = () => {
-
-    if (selected === questions[index].answer) {
-      setScore(score + 1);
-    }
+    // Record user's answer for this question
+    const nextUserAnswers = [...userAnswers, selected];
+    setUserAnswers(nextUserAnswers);
 
     setSelected("");
 
     if (index + 1 < questions.length) {
       setIndex(index + 1);
-    }
-    else {
-      // Quiz completed - show success message
+    } else {
+      // Quiz completed - evaluate against server-stored answer key if available
       setSuccessMessage("✅ Quiz completed successfully!");
       setTimeout(() => setSuccessMessage(""), 3000);
-      setShowResult(true);
+
+      const evaluateAndShow = async () => {
+        try {
+          // If we have a server-side quizId, use it; otherwise fall back to client-side scoring
+          if (quizId) {
+            const resp = await fetch("http://localhost:5000/evaluate-quiz", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ quizId, answers: nextUserAnswers })
+            });
+
+            if (resp.ok) {
+              const result = await resp.json();
+              if (result && result.success) {
+                setScore(result.score);
+                setCorrectCount(result.correct || 0);
+                setShowResult(true);
+              } else {
+                const correct = result.correct || 0;
+                const total = (questions && questions.length) || 0;
+                const percent = total > 0 ? Math.round((correct / total) * 100) : 0;
+                setScore(percent);
+                setCorrectCount(correct);
+                setShowResult(true);
+              }
+            } else {
+              console.error("Evaluation API failed", resp.status);
+              const clientCorrect = questions.reduce((acc, q, i) => acc + ((q.answer || "").toString().trim().toLowerCase() === (nextUserAnswers[i] || "").toString().trim().toLowerCase() ? 1 : 0), 0);
+              const percent = questions.length > 0 ? Math.round((clientCorrect / questions.length) * 100) : 0;
+              setScore(percent);
+              setCorrectCount(clientCorrect);
+              setShowResult(true);
+            }
+          } else {
+            const clientCorrect = questions.reduce((acc, q, i) => acc + ((q.answer || "").toString().trim().toLowerCase() === (nextUserAnswers[i] || "").toString().trim().toLowerCase() ? 1 : 0), 0);
+            const percent = questions.length > 0 ? Math.round((clientCorrect / questions.length) * 100) : 0;
+            setScore(percent);
+            setCorrectCount(clientCorrect);
+            setShowResult(true);
+          }
+        } catch (err) {
+          console.error("Evaluation error:", err);
+          const clientCorrect = questions.reduce((acc, q, i) => acc + ((q.answer || "").toString().trim().toLowerCase() === (nextUserAnswers[i] || "").toString().trim().toLowerCase() ? 1 : 0), 0);
+          const percent = questions.length > 0 ? Math.round((clientCorrect / questions.length) * 100) : 0;
+          setScore(percent);
+          setShowResult(true);
+        }
+      };
+
+      evaluateAndShow();
     }
   };
 
@@ -644,10 +718,10 @@ function App() {
           <div className="card">
             <h2>🏆 Quiz Complete</h2>
             <p className="result" style={{ fontSize: "24px", fontWeight: "bold", margin: "20px 0" }}>
-              Your Score: {score} / {questions.length}
+              Your Score: {correctCount !== null ? correctCount : 0} / {questions.length}
             </p>
             <p style={{ color: "#666" }}>
-              Percentage: {Math.round((score / questions.length) * 100)}%
+              Percentage: {score}%
             </p>
 
             <button
@@ -672,6 +746,9 @@ function App() {
                 setIndex(0);
                 setScore(0);
                 setSelected({});
+                setQuizId(null);
+                setUserAnswers([]);
+                setCorrectCount(null);
                 setShowResult(false);
                 setTopic("");
                 setExtractedContent("");

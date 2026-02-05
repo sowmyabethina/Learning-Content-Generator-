@@ -1,18 +1,24 @@
 import fetch from "node-fetch";
 
-// Works with normal GitHub page URL or raw URL
-const githubUrl = "https://github.com/sowmyabethina/mcp/blob/main/sample.pdf";
+const githubUrl =
+  "https://github.com/sowmyabethina/mcp/blob/main/sample.pdf";
 
 async function run() {
+
   const res = await fetch("http://localhost:3333", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json"
+    },
+
     body: JSON.stringify({
       jsonrpc: "2.0",
       id: 1,
+
       method: "tools/call",
+
       params: {
-        name: "read_github_pdf",
+        name: "read_github_pdf_and_generate_questions", // ✅ FIXED
         arguments: {
           github_url: githubUrl
         }
@@ -21,7 +27,8 @@ async function run() {
   });
 
   const data = await res.json();
-  console.log(data);
+
+  console.log("✅ Result:\n", JSON.stringify(data, null, 2));
 }
 
 run();
