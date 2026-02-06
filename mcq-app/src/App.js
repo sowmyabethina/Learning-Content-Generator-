@@ -9,6 +9,9 @@ import {
 import { useState } from "react";
 import "./App.css";
 
+// Components
+import { TopBar, PdfExtraction, ExtractedContentPreview, Quiz, QuizResult, TopicInput, LearningQuestions, PersonalizedContent, LevelTest, LevelResult, ContentRecommendations, SuccessMessage } from "./components";
+
 function App() {
   // ==========================================
   // STEP 1: PDF Extraction & Content States
@@ -47,6 +50,7 @@ function App() {
   const [learningSelected, setLearningSelected] = useState("");
   const [learningAnswers, setLearningAnswers] = useState([]);
   const [showLearningQuestions, setShowLearningQuestions] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [learningStyleId, setLearningStyleId] = useState(null);
   const [showPersonalizedContent, setShowPersonalizedContent] = useState(false);
   const [personalizedContent, setPersonalizedContent] = useState(null);
@@ -61,6 +65,7 @@ function App() {
   const [levelTestAnswers, setLevelTestAnswers] = useState([]);
   const [showLevelTest, setShowLevelTest] = useState(false);
   const [detectedLevel, setDetectedLevel] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [levelTestScore, setLevelTestScore] = useState(0);
   const [showLevelResult, setShowLevelResult] = useState(false);
 
@@ -71,12 +76,14 @@ function App() {
   const [personalizedQuestions, setPersonalizedQuestions] = useState([]);
   const [personalIndex, setPersonalIndex] = useState(0);
   const [personalSelected, setPersonalSelected] = useState("");
+  // eslint-disable-next-line no-unused-vars
   const [showPersonalizedQuiz, setShowPersonalizedQuiz] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [personalAnswers, setPersonalAnswers] = useState([]); // store selections for topic generation
+  // eslint-disable-next-line no-unused-vars
   const [showGenerateTopicButton, setShowGenerateTopicButton] = useState(false);
   const [generatedTopics, setGeneratedTopics] = useState([]);
 
-  // Get Clerk user for personalization hints (kept optional)
   // Get Clerk user for personalization hints (kept optional)
   const { user } = useUser();
 
@@ -162,16 +169,118 @@ function App() {
   };
 
 
+  // =========================================
+  // Reset all states for a new session
+  // =========================================
+  const resetAllStates = () => {
+    setQuestions([]);
+    setIndex(0);
+    setScore(0);
+    setSelected("");
+    setQuizId(null);
+    setUserAnswers([]);
+    setCorrectCount(null);
+    setShowResult(false);
+    setTopic("");
+    setShowTopicInput(false);
+    setLearningQuestions([]);
+    setLearningIndex(0);
+    setLearningSelected("");
+    setLearningAnswers([]);
+    setShowLearningQuestions(false);
+    setLearningStyleId(null);
+    setShowPersonalizedContent(false);
+    setPersonalizedContent(null);
+    setExtractedContent("");
+    setIsExtracted(false);
+    setGithubLink("");
+    setError("");
+    setSuccessMessage("");
+    setLevelTestQuestions([]);
+    setLevelTestIndex(0);
+    setLevelTestSelected("");
+    setLevelTestAnswers([]);
+    setShowLevelTest(false);
+    setDetectedLevel(null);
+    setLevelTestScore(0);
+    setShowLevelResult(false);
+    setGeneratedTopics([]);
+    setPersonalizedQuestions([]);
+    setPersonalIndex(0);
+    setPersonalSelected("");
+    setShowPersonalizedQuiz(false);
+    setPersonalAnswers([]);
+    setShowGenerateTopicButton(false);
+  };
 
-  // ==========================================
+
+  // =========================================
+  // Reset states for new level assessment
+  // =========================================
+  const resetLevelAssessment = () => {
+    setShowLevelResult(false);
+    setShowTopicInput(true);
+    setTopic("");
+    setDetectedLevel(null);
+    setLevelTestScore(0);
+  };
+
+
+  // =========================================
+  // Reset states for new topic
+  // =========================================
+  const resetForNewTopic = () => {
+    setTopic("");
+    setShowPersonalizedContent(false);
+    setPersonalizedContent(null);
+    setShowResult(true);
+  };
+
+
+  // =========================================
+  // Reset for content recommendations
+  // =========================================
+  const resetForContentRecommendations = () => {
+    setGeneratedTopics([]);
+    setTopic("");
+    setDetectedLevel(null);
+    setShowTopicInput(true);
+  };
+
+
+  // =========================================
+  // Reset for new session from content recommendations
+  // =========================================
+  const resetFromContentRecommendations = () => {
+    setQuestions([]);
+    setIndex(0);
+    setScore(0);
+    setSelected("");
+    setQuizId(null);
+    setUserAnswers([]);
+    setCorrectCount(null);
+    setShowResult(false);
+    setTopic("");
+    setExtractedContent("");
+    setIsExtracted(false);
+    setGithubLink("");
+    setError("");
+    setSuccessMessage("");
+    setGeneratedTopics([]);
+    setDetectedLevel(null);
+    setLevelTestQuestions([]);
+    setLevelTestIndex(0);
+    setLevelTestSelected("");
+    setLevelTestAnswers([]);
+    setShowLevelTest(false);
+    setLevelTestScore(0);
+    setShowLevelResult(false);
+  };
+
+
+  // =========================================
   // STEP 1: EXTRACT DOCUMENT FROM GITHUB PDF
-  // ==========================================
-  // This function:
-  // 1. Fetches PDF from GitHub
-  // 2. Extracts text content
-  // 3. Shows success message
-  // 4. Stores extracted content for next step
-  
+  // =========================================
   const extractDocument = async () => {
     setLoading(true);
     setError("");
@@ -217,238 +326,236 @@ function App() {
     setLoading(false);
   };
 
-    // =========================================
-    // STEP 5: Generate Personalized Quiz
-    // NEW: This creates an adaptive quiz focused on LEARNING STYLE PREFERENCES,
-    // NOT on the entered topic. It assesses how the user prefers to learn.
-    // It does NOT show a result screen after completion per requirements.
-    // =========================================
-    const generatePersonalizedQuiz = async () => {
-      setLoading(true);
-      setError("");
-      setSuccessMessage("");
 
-      try {
-        const profile = user ? { id: user.id, fullName: user.fullName, primaryEmail: user.primaryEmailAddress?.emailAddress || null } : {};
+  // =========================================
+  // STEP 5: Generate Personalized Quiz
+  // =========================================
+  const generatePersonalizedQuiz = async () => {
+    setLoading(true);
+    setError("");
+    setSuccessMessage("");
 
-        // IMPORTANT: Personalized quiz focuses on learning preferences, NOT topic-based questions
-        const payload = {
-          // Do NOT include topic or docText - only ask about learning style
-          userProfile: profile
-        };
+    try {
+      const profile = user ? { id: user.id, fullName: user.fullName, primaryEmail: user.primaryEmailAddress?.emailAddress || null } : {};
 
-        const res = await fetch("http://localhost:5000/generate-from-pdf", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
+      // IMPORTANT: Personalized quiz focuses on learning preferences, NOT topic-based questions
+      const payload = {
+        userProfile: profile
+      };
 
-        if (!res.ok) {
-          const txt = await res.text();
-          throw new Error(`Server ${res.status}: ${txt}`);
-        }
+      const res = await fetch("http://localhost:5000/generate-from-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
 
-        const data = await res.json();
-
-        // Expecting JSON array of questions
-        if (Array.isArray(data) && data.length > 0) {
-          setPersonalizedQuestions(data);
-          setPersonalIndex(0);
-          setPersonalSelected("");
-          setPersonalAnswers([]);
-          setShowPersonalizedQuiz(true);
-          setShowGenerateTopicButton(false);
-        } else {
-          setError("Learning preference assessment returned no questions");
-        }
-
-      } catch (err) {
-        console.error("Personalized generation error:", err);
-        setError(`Learning assessment failed: ${err.message}`);
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`Server ${res.status}: ${txt}`);
       }
 
-      setLoading(false);
-    };
+      const data = await res.json();
 
-    // =========================================
-    // Personalized Quiz: Next Question
-    // Advances through the learning preference questions and records answers.
-    // When finished, DO NOT show a result; instead show the 'Generate Content' button.
-    // =========================================
-    const nextPersonalQuestion = () => {
-      // record answer
-      setPersonalAnswers(prev => [...prev, personalSelected]);
-
-      setPersonalSelected("");
-
-      if (personalIndex + 1 < personalizedQuestions.length) {
-        setPersonalIndex(personalIndex + 1);
+      // Expecting JSON array of questions
+      if (Array.isArray(data) && data.length > 0) {
+        setPersonalizedQuestions(data);
+        setPersonalIndex(0);
+        setPersonalSelected("");
+        setPersonalAnswers([]);
+        setShowPersonalizedQuiz(true);
+        setShowGenerateTopicButton(false);
       } else {
-        // Finished personalized quiz: do NOT show result, show success message
-        setShowPersonalizedQuiz(false);
-        setSuccessMessage("✅ Personalized assessment completed!");
-        setTimeout(() => setSuccessMessage(""), 3000);
-        // Now show the Generate Content button
-        setShowGenerateTopicButton(true);
-      }
-    };
-
-    // =========================================
-    // Generate Level Assessment Test
-    // Generates 5 questions to assess user's knowledge level on the topic
-    // =========================================
-    const generateLevelTest = async () => {
-      setLoading(true);
-      setError("");
-      setSuccessMessage("");
-
-      try {
-        if (!topic.trim()) {
-          setError("Please enter a topic");
-          setLoading(false);
-          return;
-        }
-
-        const res = await fetch("http://localhost:5000/generate-level-test", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ topic: topic.trim() })
-        });
-
-        if (!res.ok) {
-          const txt = await res.text();
-          throw new Error(`Server ${res.status}: ${txt}`);
-        }
-
-        const data = await res.json();
-
-        // Expecting JSON array of questions
-        if (Array.isArray(data) && data.length > 0) {
-          setLevelTestQuestions(data);
-          setLevelTestIndex(0);
-          setLevelTestSelected("");
-          setLevelTestAnswers([]);
-          setShowLevelTest(true);
-          setShowTopicInput(false);
-          setShowLevelResult(false);
-          setSuccessMessage("💡 Level Assessment Started!");
-          setTimeout(() => setSuccessMessage(""), 2000);
-        } else {
-          setError("Level test generation failed - no questions received");
-        }
-
-      } catch (err) {
-        console.error("Level test generation error:", err);
-        setError(`Assessment generation failed: ${err.message}`);
+        setError("Learning preference assessment returned no questions");
       }
 
-      setLoading(false);
-    };
+    } catch (err) {
+      console.error("Personalized generation error:", err);
+      setError(`Learning assessment failed: ${err.message}`);
+    }
 
-    // =========================================
-    // Next Level Test Question
-    // =========================================
-    const nextLevelTestQuestion = () => {
-      if (!levelTestSelected) {
+    setLoading(false);
+  };
+
+
+  // =========================================
+  // Personalized Quiz: Next Question
+  // =========================================
+  const nextPersonalQuestion = () => {
+    // record answer
+    setPersonalAnswers(prev => [...prev, personalSelected]);
+
+    setPersonalSelected("");
+
+    if (personalIndex + 1 < personalizedQuestions.length) {
+      setPersonalIndex(personalIndex + 1);
+    } else {
+      // Finished personalized quiz: do NOT show result, show success message
+      setShowPersonalizedQuiz(false);
+      setSuccessMessage("✅ Personalized assessment completed!");
+      setTimeout(() => setSuccessMessage(""), 3000);
+      // Now show the Generate Content button
+      setShowGenerateTopicButton(true);
+    }
+  };
+
+
+  // =========================================
+  // Generate Level Assessment Test
+  // =========================================
+  const generateLevelTest = async () => {
+    setLoading(true);
+    setError("");
+    setSuccessMessage("");
+
+    try {
+      if (!topic.trim()) {
+        setError("Please enter a topic");
+        setLoading(false);
         return;
       }
 
-      const nextAnswers = [...levelTestAnswers, levelTestSelected];
-      setLevelTestAnswers(nextAnswers);
-      setLevelTestSelected("");
+      const res = await fetch("http://localhost:5000/generate-level-test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: topic.trim() })
+      });
 
-      if (levelTestIndex + 1 < levelTestQuestions.length) {
-        setLevelTestIndex(levelTestIndex + 1);
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`Server ${res.status}: ${txt}`);
+      }
+
+      const data = await res.json();
+
+      // Expecting JSON array of questions
+      if (Array.isArray(data) && data.length > 0) {
+        setLevelTestQuestions(data);
+        setLevelTestIndex(0);
+        setLevelTestSelected("");
+        setLevelTestAnswers([]);
+        setShowLevelTest(true);
+        setShowTopicInput(false);
+        setShowLevelResult(false);
+        setSuccessMessage("💡 Level Assessment Started!");
+        setTimeout(() => setSuccessMessage(""), 2000);
       } else {
-        // Level test completed - evaluate immediately
-        evaluateAndShowLevel(nextAnswers);
+        setError("Level test generation failed - no questions received");
       }
-    };
 
-    // =========================================
-    // Evaluate Level and Show Result
-    // =========================================
-    const evaluateAndShowLevel = async (finalAnswers) => {
-      try {
-        const correctAnswers = levelTestQuestions.map(q => q.answer);
+    } catch (err) {
+      console.error("Level test generation error:", err);
+      setError(`Assessment generation failed: ${err.message}`);
+    }
 
-        const resp = await fetch("http://localhost:5000/evaluate-level", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            answers: finalAnswers,
-            correctAnswers: correctAnswers
-          })
-        });
+    setLoading(false);
+  };
 
-        if (resp.ok) {
-          const result = await resp.json();
-          if (result.success) {
-            setDetectedLevel(result.level);
-            setLevelTestScore(result.percentage);
-            setShowLevelTest(false);
-            setShowLevelResult(true);
-            setSuccessMessage(`✨ Your level: ${result.level} (${result.percentage}%)`);
-            setTimeout(() => setSuccessMessage(""), 3000);
-          }
-        } else {
-          throw new Error("Server evaluation failed");
-        }
-      } catch (err) {
-        console.error("Level evaluation error:", err);
-        setError(`Level evaluation failed: ${err.message}`);
-      }
-    };
 
-    // =========================================
-    // Generate Content Based on Level
-    // =========================================
-    const getContentForLevel = async () => {
-      setLoading(true);
-      setError("");
+  // =========================================
+  // Next Level Test Question
+  // =========================================
+  const nextLevelTestQuestion = () => {
+    if (!levelTestSelected) {
+      return;
+    }
 
-      try {
-        const payload = {
-          level: detectedLevel,
-          topic: topic,
-          userProfile: user ? { id: user.id, fullName: user.fullName } : {}
-        };
+    const nextAnswers = [...levelTestAnswers, levelTestSelected];
+    setLevelTestAnswers(nextAnswers);
+    setLevelTestSelected("");
 
-        const res = await fetch("http://localhost:5000/generate-topic", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
+    if (levelTestIndex + 1 < levelTestQuestions.length) {
+      setLevelTestIndex(levelTestIndex + 1);
+    } else {
+      // Level test completed - evaluate immediately
+      evaluateAndShowLevel(nextAnswers);
+    }
+  };
 
-        if (!res.ok) {
-          const txt = await res.text();
-          throw new Error(`Server ${res.status}: ${txt}`);
-        }
 
-        const data = await res.json();
-        if (data && Array.isArray(data.topics)) {
-          setGeneratedTopics(data.topics);
-          setShowLevelResult(false);
-          setShowGenerateTopicButton(false);
-          setSuccessMessage("📚 Content generated based on your level!");
+  // =========================================
+  // Evaluate Level and Show Result
+  // =========================================
+  const evaluateAndShowLevel = async (finalAnswers) => {
+    try {
+      const correctAnswers = levelTestQuestions.map(q => q.answer);
+
+      const resp = await fetch("http://localhost:5000/evaluate-level", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          answers: finalAnswers,
+          correctAnswers: correctAnswers
+        })
+      });
+
+      if (resp.ok) {
+        const result = await resp.json();
+        if (result.success) {
+          setDetectedLevel(result.level);
+          setLevelTestScore(result.percentage);
+          setShowLevelTest(false);
+          setShowLevelResult(true);
+          setSuccessMessage(`✨ Your level: ${result.level}`);
           setTimeout(() => setSuccessMessage(""), 3000);
-        } else {
-          setError("Content generation returned unexpected format");
         }
+      } else {
+        throw new Error("Server evaluation failed");
+      }
+    } catch (err) {
+      console.error("Level evaluation error:", err);
+      setError(`Level evaluation failed: ${err.message}`);
+    }
+  };
 
-      } catch (err) {
-        console.error("Content generation error:", err);
-        setError(`Content generation failed: ${err.message}`);
+
+  // =========================================
+  // Generate Content Based on Level
+  // =========================================
+  const getContentForLevel = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const payload = {
+        level: detectedLevel,
+        topic: topic,
+        userProfile: user ? { id: user.id, fullName: user.fullName } : {}
+      };
+
+      const res = await fetch("http://localhost:5000/generate-topic", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`Server ${res.status}: ${txt}`);
       }
 
-      setLoading(false);
-    };
+      const data = await res.json();
+      if (data && Array.isArray(data.topics)) {
+        setGeneratedTopics(data.topics);
+        setShowLevelResult(false);
+        setShowGenerateTopicButton(false);
+        setSuccessMessage("📚 Content generated based on your level!");
+        setTimeout(() => setSuccessMessage(""), 3000);
+      } else {
+        setError("Content generation returned unexpected format");
+      }
+
+    } catch (err) {
+      console.error("Content generation error:", err);
+      setError(`Content generation failed: ${err.message}`);
+    }
+
+    setLoading(false);
+  };
+
 
   // =========================================
   // STEP 2B: GENERATE LEARNING PREFERENCE QUESTIONS
   // =========================================
-  // Generates 5 non-technical learning style questions
-  // These are shown after user enters a topic
   const generateLearningQuestions = async () => {
     setLoading(true);
     setError("");
@@ -488,11 +595,10 @@ function App() {
     setLoading(false);
   };
 
+
   // =========================================
   // STEP 2C: NEXT LEARNING PREFERENCE QUESTION
   // =========================================
-  // Moves through learning preference questions one by one
-  // When finished, evaluates answers internally and generates personalized content
   const nextLearningQuestion = () => {
     if (!learningSelected) {
       return;
@@ -516,12 +622,10 @@ function App() {
     }
   };
 
+
   // =========================================
   // STEP 2D: EVALUATE LEARNING STYLE
   // =========================================
-  // Evaluates learning preference answers internally
-  // Does NOT display score to user
-  // Automatically calls generatePersonalizedContent
   const evaluateLearningStyle = async (answers) => {
     setLoading(true);
     setError("");
@@ -559,11 +663,10 @@ function App() {
     }
   };
 
+
   // =========================================
   // STEP 2E: GENERATE PERSONALIZED CONTENT
   // =========================================
-  // Generates learning content recommendations based on topic + learning style
-  // Displays recommendations that match user's learning preferences
   const generatePersonalizedContent = async (styleId) => {
     try {
       const res = await fetch("http://localhost:5000/generate-personalized-content", {
@@ -596,15 +699,10 @@ function App() {
     setLoading(false);
   };
 
+
   // =========================================
   // STEP 2: GENERATE QUESTIONS FROM CONTENT
   // =========================================
-  // This function:
-  // 1. Accepts extracted content or topic as input
-  // 2. Calls backend to generate MCQs
-  // 3. Parses and displays questions
-  // 4. Resets quiz state (index=0, score=0)
-
   const generateQuiz = async (useExtractedContent = true) => {
     setLoading(true);
     setError("");
@@ -723,24 +821,24 @@ function App() {
 
       if (parsedQuestions.length > 0) {
         const normalized = parsedQuestions.map(q => {
-  let correct = q.answer;
+          let correct = q.answer;
 
-  // Convert A/B/C/D → option text
-  if (typeof correct === "string" && /^[A-D]$/i.test(correct)) {
-    const idx = correct.toUpperCase().charCodeAt(0) - 65;
-    correct = q.options[idx];
-  }
+          // Convert A/B/C/D → option text
+          if (typeof correct === "string" && /^[A-D]$/i.test(correct)) {
+            const idx = correct.toUpperCase().charCodeAt(0) - 65;
+            correct = q.options[idx];
+          }
 
-  // Convert number → option text
-  if (typeof correct === "number") {
-    correct = q.options[correct];
-  }
+          // Convert number → option text
+          if (typeof correct === "number") {
+            correct = q.options[correct];
+          }
 
-  return {
-    ...q,
-    answer: correct?.trim()
-  };
-});
+          return {
+            ...q,
+            answer: correct?.trim()
+          };
+        });
 
         setQuestions(normalized);
         setIndex(0);
@@ -770,7 +868,6 @@ function App() {
   // ==========================
   // Next Question
   // ==========================
-
   const nextQuestion = () => {
     // Record user's answer for this question
     if (!selected) {
@@ -845,7 +942,6 @@ function App() {
   // ==========================
   // UI
   // ==========================
-
   return (
 
     <div className="container">
@@ -866,14 +962,7 @@ function App() {
 
       <SignedIn>
 
-        {/* Top Bar */}
-
-        <div className="top-bar">
-
-          <h2>MCQ Generator</h2>
-          <UserButton />
-
-        </div>
+        <TopBar />
 
 
         {/* Header */}
@@ -883,659 +972,163 @@ function App() {
         </div>
 
 
+        {/* Success Message */}
+        <SuccessMessage successMessage={successMessage} />
+
+
         {/* ============================= */}
         {/* EXTRACTION STEP */}
         {/* ============================= */}
-
         {!isExtracted && (
-          <div className="card">
-            <h3>📄 Upload & Extract PDF</h3>
-
-            <input
-              type="text"
-              placeholder="Paste GitHub PDF link"
-              value={githubLink}
-              onChange={(e) => setGithubLink(e.target.value)}
-              style={{ width: "100%", padding: "10px", marginBottom: "10px" }}
-            />
-
-            <button
-              onClick={extractDocument}
-              disabled={loading}
-              style={{ 
-                padding: "10px 20px", 
-                backgroundColor: "#4CAF50", 
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: loading ? "not-allowed" : "pointer"
-              }}
-            >
-              {loading ? "Extracting..." : "Extract Document"}
-            </button>
-
-            {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
-          </div>
-        )}
-
-        {/* Success Message After Extraction */}
-        {successMessage && (
-          <div className="card" style={{ backgroundColor: "#d4edda", border: "1px solid #c3e6cb" }}>
-            <p style={{ color: "#155724", margin: "10px 0" }}>{successMessage}</p>
-          </div>
+          <PdfExtraction 
+            githubLink={githubLink}
+            setGithubLink={setGithubLink}
+            extractDocument={extractDocument}
+            loading={loading}
+            error={error}
+          />
         )}
 
 
         {/* ============================= */}
         {/* EXTRACTED CONTENT PREVIEW */}
         {/* ============================= */}
-
         {isExtracted && !questions.length && !showTopicInput && (
-          <div className="card">
-            <h3>✅ PDF Content Extracted</h3>
-            <textarea
-              rows="6"
-              value={extractedContent.substring(0, 500) + "..."}
-              readOnly
-              style={{ width: "100%", padding: "10px" }}
-            />
-
-            <button
-              onClick={() => generateQuiz(true)}
-              disabled={loading}
-              style={{
-                padding: "10px 20px",
-                backgroundColor: "#2196F3",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: loading ? "not-allowed" : "pointer",
-                marginTop: "10px"
-              }}
-            >
-              {loading ? "Generating..." : "📚 Start Quiz from PDF"}
-            </button>
-
-            <button
-              onClick={() => {
-                setGithubLink("");
-                setExtractedContent("");
-                setIsExtracted(false);
-                setError("");
-              }}
-              style={{
-                padding: "10px 20px",
-                backgroundColor: "#757575",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-                marginTop: "10px",
-                marginLeft: "10px"
-              }}
-            >
-              ← Back
-            </button>
-          </div>
+          <ExtractedContentPreview 
+            extractedContent={extractedContent}
+            generateQuiz={generateQuiz}
+            loading={loading}
+            onBack={() => {
+              setGithubLink("");
+              setExtractedContent("");
+              setIsExtracted(false);
+              setError("");
+            }}
+          />
         )}
 
 
         {/* ============================= */}
         {/* QUIZ STEP */}
         {/* ============================= */}
-
         {questions.length > 0 && !showResult && (
-          <div className="card">
-            <h3>
-              🎯 Quiz ({index + 1}/{questions.length})
-            </h3>
-            <p style={{ fontSize: "18px", marginBottom: "15px" }}>
-              {questions[index].question}
-            </p>
-
-            {questions[index].options.map((opt, i) => (
-              <label key={i} className="option" style={{ display: "block", marginBottom: "10px" }}>
-                <input
-                  type="radio"
-                  name="option"
-                  value={opt}
-                  checked={selected === opt}
-                  onChange={(e) => setSelected(e.target.value)}
-                />
-                <span style={{ marginLeft: "10px" }}>{opt}</span>
-              </label>
-            ))}
-
-            <button
-              onClick={nextQuestion}
-              disabled={!selected}
-              style={{
-                padding: "10px 20px",
-                backgroundColor: selected ? "#FF9800" : "#ccc",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: selected ? "pointer" : "not-allowed",
-                marginTop: "15px"
-              }}
-            >
-              Next Question
-            </button>
-          </div>
+          <Quiz 
+            questions={questions}
+            index={index}
+            selected={selected}
+            setSelected={setSelected}
+            nextQuestion={nextQuestion}
+          />
         )}
 
 
         {/* ============================= */}
         {/* QUIZ RESULT & TOPIC INPUT */}
         {/* ============================= */}
-
         {showResult && !showTopicInput && (
-          <div className="card">
-            <h2>🏆 Quiz Complete</h2>
-            <p className="result" style={{ fontSize: "24px", fontWeight: "bold", margin: "20px 0" }}>
-              Your Score: {correctCount !== null ? correctCount : 0} / {questions.length}
-            </p>
-            <p style={{ color: "#666" }}>
-              Percentage: {score}%
-            </p>
-
-            <button
-              onClick={() => setShowTopicInput(true)}
-              style={{
-                padding: "10px 20px",
-                backgroundColor: "#9C27B0",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-                marginTop: "15px"
-              }}
-            >
-              📖 Assess Your Knowledge Level
-            </button>
-
-            <button
-              onClick={() => {
-                // Reset all states for a new session
-                setQuestions([]);
-                setIndex(0);
-                setScore(0);
-                setSelected("");
-                setQuizId(null);
-                setUserAnswers([]);
-                setCorrectCount(null);
-                setShowResult(false);
-                setTopic("");
-                setShowTopicInput(false);
-                setLearningQuestions([]);
-                setLearningIndex(0);
-                setLearningSelected("");
-                setLearningAnswers([]);
-                setShowLearningQuestions(false);
-                setLearningStyleId(null);
-                setShowPersonalizedContent(false);
-                setPersonalizedContent(null);
-                setExtractedContent("");
-                setIsExtracted(false);
-                setGithubLink("");
-                setError("");
-                setSuccessMessage("");
-                setLevelTestQuestions([]);
-                setLevelTestIndex(0);
-                setLevelTestSelected("");
-                setLevelTestAnswers([]);
-                setShowLevelTest(false);
-                setDetectedLevel(null);
-                setLevelTestScore(0);
-                setShowLevelResult(false);
-                setGeneratedTopics([]);
-                setPersonalizedQuestions([]);
-                setPersonalIndex(0);
-                setPersonalSelected("");
-                setShowPersonalizedQuiz(false);
-                setPersonalAnswers([]);
-                setShowGenerateTopicButton(false);
-              }}
-              style={{
-                padding: "10px 20px",
-                backgroundColor: "#607D8B",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-                marginTop: "10px",
-                marginLeft: "10px"
-              }}
-            >
-              🔄 New Session
-            </button>
-          </div>
+          <QuizResult 
+            correctCount={correctCount}
+            questions={questions}
+            score={score}
+            onAssessLevel={() => setShowTopicInput(true)}
+            onNewSession={resetAllStates}
+          />
         )}
 
 
         {/* ============================= */}
-        {/* LEARNING PREFERENCES STEP */}
-        {/* After PDF quiz: User enters topic, then takes level assessment */}
-        {/* to determine knowledge level on that topic */}
+        {/* TOPIC INPUT */}
         {/* ============================= */}
-
         {showTopicInput && (
-          <div className="card">
-            <h3>📌 Knowledge Level Assessment</h3>
-            <p>Enter a topic to assess your knowledge level:</p>
-
-            <input
-              type="text"
-              placeholder="Enter a topic (e.g., React, Python, Databases)"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "10px",
-                marginBottom: "10px",
-                fontSize: "16px"
-              }}
-            />
-
-            <button
-              onClick={generateLearningQuestions}
-              disabled={loading || !topic.trim()}
-              style={{
-                padding: "10px 20px",
-                backgroundColor: topic.trim() ? "#FF6F00" : "#ccc",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: topic.trim() ? "pointer" : "not-allowed"
-              }}
-            >
-              {loading ? "Preparing..." : "🎯 Begin Learning Assessment"}
-            </button>
-
-            <button
-              onClick={() => {
-                setShowTopicInput(false);
-                setShowResult(true);
-              }}
-              style={{
-                padding: "10px 20px",
-                backgroundColor: "#757575",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-                marginLeft: "10px"
-              }}
-            >
-              ← Back
-            </button>
-
-            {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
-          </div>
+          <TopicInput 
+            topic={topic}
+            setTopic={setTopic}
+            onGenerateLearningQuestions={generateLearningQuestions}
+            onBack={() => {
+              setShowTopicInput(false);
+              setShowResult(true);
+            }}
+            loading={loading}
+            error={error}
+          />
         )}
 
 
         {/* ============================= */}
         {/* LEARNING PREFERENCE QUESTIONS */}
-        {/* Shows 5 non-technical questions about learning style */}
-        {/* Does NOT collect scores - only preferences */}
-        {/* ============================= */}
-        {/* LEARNING PREFERENCE QUESTIONS */}
-        {/* Shows 5 non-technical questions about learning style */}
-        {/* Does NOT collect scores - only preferences */}
         {/* ============================= */}
         {showLearningQuestions && learningQuestions.length > 0 && (
-          <div className="card">
-            <h2>🎓 Learning Preference Assessment</h2>
-            <p style={{ color: "#666", marginBottom: "20px" }}>
-              Question {learningIndex + 1} of {learningQuestions.length}
-            </p>
-
-            <div style={{ marginBottom: "20px" }}>
-              <h3>{learningQuestions[learningIndex]?.question}</h3>
-              
-              <div style={{ marginTop: "15px" }}>
-                {learningQuestions[learningIndex]?.options?.map((option, idx) => (
-                  <label
-                    key={idx}
-                    style={{
-                      display: "block",
-                      marginBottom: "10px",
-                      padding: "10px",
-                      border: learningSelected === option ? "2px solid #2196F3" : "1px solid #ddd",
-                      borderRadius: "4px",
-                      backgroundColor: learningSelected === option ? "#E3F2FD" : "white",
-                      cursor: "pointer"
-                    }}
-                  >
-                    <input
-                      type="radio"
-                      name="learning-option"
-                      value={option}
-                      checked={learningSelected === option}
-                      onChange={(e) => setLearningSelected(e.target.value)}
-                      style={{ marginRight: "10px" }}
-                    />
-                    {option}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <button
-              onClick={nextLearningQuestion}
-              disabled={!learningSelected}
-              style={{
-                padding: "10px 20px",
-                backgroundColor: learningSelected ? "#2196F3" : "#ccc",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: learningSelected ? "pointer" : "not-allowed"
-              }}
-            >
-              {learningIndex + 1 === learningQuestions.length ? "Complete Assessment" : "Next"}
-            </button>
-
-            {loading && <p style={{ marginTop: "10px", color: "#666" }}>Processing...</p>}
-          </div>
+          <LearningQuestions 
+            learningQuestions={learningQuestions}
+            learningIndex={learningIndex}
+            learningSelected={learningSelected}
+            setLearningSelected={setLearningSelected}
+            nextLearningQuestion={nextLearningQuestion}
+            loading={loading}
+          />
         )}
 
 
         {/* ============================= */}
         {/* PERSONALIZED LEARNING CONTENT */}
-        {/* Shows recommendations based on topic + learning style */}
         {/* ============================= */}
         {showPersonalizedContent && personalizedContent && (
-          <div className="card">
-            <h2>📚 Your Personalized Learning Path</h2>
-            <p style={{ color: "#666", marginBottom: "20px" }}>
-              Topic: <strong>{personalizedContent.topic}</strong>
-            </p>
-
-            <div style={{ marginBottom: "25px" }}>
-              <h3>Suggested Learning Resources:</h3>
-              <div style={{ marginTop: "15px" }}>
-                {personalizedContent.resources?.map((resource, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      padding: "15px",
-                      marginBottom: "10px",
-                      border: "1px solid #E0E0E0",
-                      borderRadius: "4px",
-                      backgroundColor: "#FAFAFA"
-                    }}
-                  >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div>
-                        <p style={{ margin: "0 0 5px 0", fontWeight: "bold", fontSize: "16px" }}>
-                          {resource.type}
-                        </p>
-                        <p style={{ margin: "0 0 5px 0", fontSize: "15px" }}>
-                          {resource.title}
-                        </p>
-                        <p style={{ margin: "0", color: "#666", fontSize: "14px" }}>
-                          {resource.description}
-                        </p>
-                      </div>
-                      <p style={{ margin: "0", color: "#999", fontSize: "13px", textAlign: "right", minWidth: "100px" }}>
-                        ⏱ {resource.duration}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div style={{ marginBottom: "20px" }}>
-              <h3>📖 Recommended Learning Path:</h3>
-              <ol style={{ marginTop: "10px", paddingLeft: "20px" }}>
-                {personalizedContent.suggestedPath?.map((step, idx) => (
-                  <li key={idx} style={{ marginBottom: "8px", color: "#333" }}>
-                    {step}
-                  </li>
-                ))}
-              </ol>
-            </div>
-
-            <div style={{ marginBottom: "20px" }}>
-              <h3>💡 Learning Tips:</h3>
-              <ul style={{ marginTop: "10px", paddingLeft: "20px" }}>
-                {personalizedContent.tips?.map((tip, idx) => (
-                  <li key={idx} style={{ marginBottom: "8px", color: "#333" }}>
-                    {tip}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <button
-              onClick={() => {
-                // Reset for new topic
-                setTopic("");
-                setShowPersonalizedContent(false);
-                setPersonalizedContent(null);
-                setShowResult(true);
-              }}
-              style={{
-                padding: "10px 20px",
-                backgroundColor: "#4CAF50",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-                marginRight: "10px"
-              }}
-            >
-              ✓ Understood
-            </button>
-
-            <button
-              onClick={() => {
-                setShowPersonalizedContent(false);
-                setPersonalizedContent(null);
-                setShowResult(true);
-              }}
-              style={{
-                padding: "10px 20px",
-                backgroundColor: "#757575",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer"
-              }}
-            >
-              ← Back
-            </button>
-          </div>
+          <PersonalizedContent 
+            personalizedContent={personalizedContent}
+            onUnderstood={() => {
+              setTopic("");
+              setShowPersonalizedContent(false);
+              setPersonalizedContent(null);
+              setShowResult(true);
+            }}
+            onBack={() => {
+              setShowPersonalizedContent(false);
+              setPersonalizedContent(null);
+              setShowResult(true);
+            }}
+          />
         )}
 
 
         {/* ============================= */}
         {/* LEVEL ASSESSMENT TEST */}
-        {/* Shows 5 progressive difficulty questions to assess knowledge level */}
         {/* ============================= */}
         {showLevelTest && levelTestQuestions.length > 0 && (
-          <div className="card">
-            <h3>🎯 Knowledge Assessment ({levelTestIndex + 1}/{levelTestQuestions.length})</h3>
-            <p style={{ fontSize: "14px", color: "#666", marginBottom: "10px" }}>
-              Difficulty: <strong>{levelTestQuestions[levelTestIndex].difficulty || "Mixed"}</strong>
-            </p>
-            <p style={{ fontSize: "18px", marginBottom: "15px" }}>
-              {levelTestQuestions[levelTestIndex].question}
-            </p>
-
-            {levelTestQuestions[levelTestIndex].options.map((opt, i) => (
-              <label key={i} className="option" style={{ display: "block", marginBottom: "10px" }}>
-                <input
-                  type="radio"
-                  name="levelOption"
-                  value={opt}
-                  checked={levelTestSelected === opt}
-                  onChange={(e) => setLevelTestSelected(e.target.value)}
-                />
-                <span style={{ marginLeft: "10px" }}>{opt}</span>
-              </label>
-            ))}
-
-            <button
-              onClick={nextLevelTestQuestion}
-              disabled={!levelTestSelected}
-              style={{
-                padding: "10px 20px",
-                backgroundColor: levelTestSelected ? "#FF6F00" : "#ccc",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: levelTestSelected ? "pointer" : "not-allowed",
-                marginTop: "15px"
-              }}
-            >
-              {levelTestIndex + 1 === levelTestQuestions.length ? "Finish & Get Result" : "Next Question"}
-            </button>
-          </div>
+          <LevelTest 
+            levelTestQuestions={levelTestQuestions}
+            levelTestIndex={levelTestIndex}
+            levelTestSelected={levelTestSelected}
+            setLevelTestSelected={setLevelTestSelected}
+            nextLevelTestQuestion={nextLevelTestQuestion}
+          />
         )}
 
 
         {/* ============================= */}
         {/* LEVEL ASSESSMENT RESULT */}
-        {/* Shows detected level and offers to generate content */}
         {/* ============================= */}
         {showLevelResult && detectedLevel && (
-          <div className="card">
-            <h2>🏅 Your Knowledge Level</h2>
-            <p style={{ fontSize: "32px", fontWeight: "bold", color: "#FF6F00", margin: "20px 0" }}>
-              {detectedLevel}
-            </p>
-            <p style={{ fontSize: "18px", color: "#666" }}>
-              Score: {levelTestScore}%
-            </p>
-            <p style={{ marginTop: "15px", color: "#555" }}>
-              Based on your performance in the assessment on <strong>{topic}</strong>
-            </p>
-
-            <button
-              onClick={getContentForLevel}
-              disabled={loading}
-              style={{
-                padding: "10px 20px",
-                backgroundColor: "#3F51B5",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: loading ? "not-allowed" : "pointer",
-                marginTop: "20px"
-              }}
-            >
-              {loading ? "Generating..." : "📚 Generate Content for My Level"}
-            </button>
-
-            <button
-              onClick={() => {
-                setShowLevelResult(false);
-                setShowTopicInput(true);
-                setTopic("");
-                setDetectedLevel(null);
-                setLevelTestScore(0);
-              }}
-              style={{
-                padding: "10px 20px",
-                backgroundColor: "#757575",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-                marginTop: "10px",
-                marginLeft: "10px"
-              }}
-            >
-              ← Back
-            </button>
-          </div>
+          <LevelResult 
+            detectedLevel={detectedLevel}
+            topic={topic}
+            getContentForLevel={getContentForLevel}
+            loading={loading}
+            onBack={resetLevelAssessment}
+          />
         )}
 
 
         {/* ============================= */}
         {/* CONTENT RECOMMENDATIONS */}
-        {/* Shows personalized content based on detected level */}
         {/* ============================= */}
         {generatedTopics.length > 0 && !showLevelResult && (
-          <div className="card">
-            <h3>📚 Recommended Content for {detectedLevel} Level</h3>
-            <p>Based on your level assessment in <strong>{topic}</strong>:</p>
-
-            <div style={{ marginTop: "15px" }}>
-              <ul style={{ lineHeight: "1.8" }}>
-                {generatedTopics.map((t, i) => (
-                  <li key={i} style={{ marginBottom: "10px" }}>
-                    <strong>✓</strong> {t}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <button
-              onClick={() => {
-                setGeneratedTopics([]);
-                setTopic("");
-                setDetectedLevel(null);
-                setShowTopicInput(true);
-              }}
-              style={{
-                padding: "10px 20px",
-                backgroundColor: "#4CAF50",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-                marginTop: "15px"
-              }}
-            >
-              🎯 Assess Another Topic
-            </button>
-
-            <button
-              onClick={() => {
-                // Go back to new session
-                setQuestions([]);
-                setIndex(0);
-                setScore(0);
-                setSelected("");
-                setQuizId(null);
-                setUserAnswers([]);
-                setCorrectCount(null);
-                setShowResult(false);
-                setTopic("");
-                setExtractedContent("");
-                setIsExtracted(false);
-                setGithubLink("");
-                setError("");
-                setSuccessMessage("");
-                setGeneratedTopics([]);
-                setDetectedLevel(null);
-                setLevelTestQuestions([]);
-                setLevelTestIndex(0);
-                setLevelTestSelected("");
-                setLevelTestAnswers([]);
-                setShowLevelTest(false);
-                setLevelTestScore(0);
-                setShowLevelResult(false);
-              }}
-              style={{
-                padding: "10px 20px",
-                backgroundColor: "#607D8B",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-                marginTop: "10px",
-                marginLeft: "10px"
-              }}
-            >
-              🔄 New Session
-            </button>
-          </div>
+          <ContentRecommendations 
+            generatedTopics={generatedTopics}
+            detectedLevel={detectedLevel}
+            topic={topic}
+            onAssessAnother={resetForContentRecommendations}
+            onNewSession={resetFromContentRecommendations}
+          />
         )}
 
 
